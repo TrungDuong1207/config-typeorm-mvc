@@ -1,42 +1,29 @@
-import { AppDataSource } from "./src/data-source";
-import { PhoneBook } from "./src/entity/PhoneBook";
 import multer from 'multer';
 const upload = multer();
 import express from "express";
 import bodyParser from 'body-parser';
-
+import { AppDataSource } from "./src/data-source";
+import { Blog } from "./src/entity/Blog";
+import { apiRouterBlog } from "./src/routers/blog.api.router";
 const PORT = 3000;
-
-AppDataSource.initialize().then(async connection => {
-  const app = express();
-  app.set("view engine", "ejs");
-  app.set("views", "./src/views");
-  app.use(bodyParser.json());
-  app.use(express.json());
-  const PhoneBookRepo = connection.getRepository(PhoneBook);
-  app.get("/phone/create", (req, res) => {
-    res.render("create");
-  });
-
-  app.post("/phone/create", upload.none(), async (req, res) => {
-    const phoneData = {
-      name: req.body.name,
-      address: req.body.address,
-      email: req.body.email,
-      phone: req.body.phone
-    };
-
-    const phone = await PhoneBookRepo.save(phoneData);
-    res.render("success");
-  });
-
-  app.get("/phone/list", async (req, res) => {
-    const phoneBooks = await PhoneBookRepo.find();
-    res.render("list", { phoneBooks: phoneBooks })
-  });
-
-  app.listen(PORT, () => {
-    console.log("App running with port: " + PORT)
+const app = express();
+app.set("view engine", "ejs");
+app.set("views", "./src/views");
+app.use(bodyParser.json());
+app.use(express.json());
+AppDataSource
+  .initialize()
+  .then(() => {
+    console.log("Data Source has been initialized!")
   })
-});
+  .catch((err) => {
+    console.error("Error during Data Source initialization:", err)
+  })
+export let blogRepo = AppDataSource.getRepository(Blog);
+app.use("/api", apiRouterBlog);
+app.listen(PORT, () => {
+  console.log("App running with port: " + PORT)
+})
+
+
 
